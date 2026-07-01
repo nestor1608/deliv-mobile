@@ -1,20 +1,40 @@
+// App.js
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
+import * as NavigationBar from 'expo-navigation-bar';
+
+// Contexts
+import { AuthProvider } from './src/context/AuthContext';
+import { NotificationProvider } from './src/context/NotificationContext';
+
+// Navigation
+import AppNavigator from './src/navigation/AppNavigator';
+
+// Configurar la barra de navegación en Android
+if (Platform.OS === 'android') {
+  NavigationBar.setBackgroundColorAsync('#FFFFFF');
+}
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <NavigationContainer>
+            <StatusBar style="dark" backgroundColor="#FFFFFF" translucent={false} />
+            <AppNavigator />
+          </NavigationContainer>
+        </NotificationProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
