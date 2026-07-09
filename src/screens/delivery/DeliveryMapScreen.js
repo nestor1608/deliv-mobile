@@ -41,8 +41,9 @@ export default function DeliveryMapScreen() {
     startLocationTracking();
 
     if (orderId) {
-      const baseUrl = API_BASE_URL.replace('/api', '');
-      const wsUrl = `ws://${baseUrl.replace('https://', '').replace('http://', '')}/ws/orders/${orderId}/`;
+      const wsProtocol = API_BASE_URL.startsWith('https') ? 'wss' : 'ws';
+      const host = API_BASE_URL.replace('https://', '').replace('http://', '').replace('/api', '');
+      const wsUrl = `${wsProtocol}://${host.replace(':8000', ':8001')}/ws/orders/${orderId}/`;
       wsService.setCallbacks({
         onOpen: () => { wsConnected.current = true; },
         onError: (err) => console.error('WS error:', err),

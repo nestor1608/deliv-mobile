@@ -84,8 +84,9 @@ const RideTrackingScreen = ({ route, navigation }) => {
         if (!rideData) loadRideDetails();
         startLocationTracking();
 
-        const baseUrl = API_BASE_URL.replace('/api', '');
-        const wsUrl = `ws://${baseUrl.replace('https://', '').replace('http://', '')}/ws/trips/${idToLoad}/`;
+        const wsProtocol = API_BASE_URL.startsWith('https') ? 'wss' : 'ws';
+        const host = API_BASE_URL.replace('https://', '').replace('http://', '').replace('/api', '');
+        const wsUrl = `${wsProtocol}://${host.replace(':8000', ':8001')}/ws/trips/${idToLoad}/`;
 
         wsService.setCallbacks({
             onMessage: (data) => {
