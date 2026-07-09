@@ -15,6 +15,11 @@ module.exports = {
       build: 'cd android && ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug',
       binaryPath: 'android/app/build/outputs/apk/debug/app-debug.apk',
     },
+    'android.att.debug': {
+      type: 'android.apk',
+      build: 'cd android && ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug',
+      binaryPath: 'android/app/build/outputs/apk/debug/app-debug.apk',
+    },
   },
   devices: {
     emulator: {
@@ -23,11 +28,21 @@ module.exports = {
         avdName: 'Pixel_6a_API_34',
       },
     },
+    attached: {
+      type: 'android.attached',
+      device: {
+        adbName: '.*',
+      },
+    },
   },
   configurations: {
     'android.emu.debug': {
       device: 'emulator',
       app: 'android.emu.debug',
+    },
+    'android.att.debug': {
+      device: 'attached',
+      app: 'android.att.debug',
     },
   },
 };
