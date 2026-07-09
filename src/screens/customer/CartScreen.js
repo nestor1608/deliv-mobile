@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const CartScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
-  const { userData } = useContext(AuthContext);
+  const { userData, userToken, API_BASE_URL } = useContext(AuthContext);
   const [cartItems, setCartItems] = useState([]);
   const [promoCode, setPromoCode] = useState('');
   const [discount, setDiscount] = useState(0);
@@ -117,31 +117,31 @@ const CartScreen = ({ navigation }) => {
     );
   };
 
-  const applyPromoCode = () => {
+  const applyPromoCode = async () => {
     if (!promoCode.trim()) {
       Alert.alert('Error', 'Por favor ingresa un código promocional');
       return;
     }
 
-    // Simulación de códigos promocionales
-    const validCodes = {
-      'PRIMERA50': 0.50,
-      'DESCUENTO20': 0.20,
-      'ENVIOGRATIS': 0.00 // Este código elimina el costo de envío
-    };
+    const vendorId = cartItems.length > 0 ? cartItems[0].storeId : null;
 
-    if (validCodes[promoCode.toUpperCase()]) {
-      if (promoCode.toUpperCase() === 'ENVIOGRATIS') {
-        setDeliveryFee(0);
-        setDiscount(0);
-        Alert.alert('¡Código aplicado!', 'Envío gratis aplicado');
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/orders/validate-coupon/?code=${encodeURIComponent(promoCode)}&subtotal=${calculateSubtotal()}${vendorId ? `&vendor_id=${vendorId}` : ''}`,
+        { headers: { Authorization: `Bearer ${userToken}` } }
+      );
+      const data = await response.json();
+      if (data.valid) {
+        setDiscount(data.discount_amount);
+        setPromoCode('');
+        Alert.alert('Cupón aplicado', `Descuento: $${data.discount_amount}`);
       } else {
-        setDiscount(validCodes[promoCode.toUpperCase()]);
-        Alert.alert('¡Código aplicado!', `Descuento del ${(validCodes[promoCode.toUpperCase()] * 100).toFixed(0)}% aplicado`);
+        setDiscount(0);
+        setPromoCode('');
+        Alert.alert('Cupón inválido', data.message);
       }
-      setPromoCode('');
-    } else {
-      Alert.alert('Código inválido', 'El código promocional no es válido o ha expirado');
+    } catch (error) {
+      Alert.alert('Error', 'Error al validar cupón');
     }
   };
 
@@ -150,7 +150,7 @@ const CartScreen = ({ navigation }) => {
   };
 
   const calculateDiscount = () => {
-    return calculateSubtotal() * discount;
+    return discount;
   };
 
   const calculateTotal = () => {

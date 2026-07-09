@@ -1,0 +1,92 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "search": "Buscar",
+    "no_results": "Sin resultados",
+    "retry": "Reintentar",
+    "logout": "Cerrar sesión",
+    "login": "Iniciar sesión",
+    "register": "Registrarse"
+  },
+  "auth": {
+    "welcome": "Bienvenido",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "username": "Usuario",
+    "login_title": "Iniciar Sesión",
+    "register_title": "Crear Cuenta",
+    "forgot_password": "¿Olvidaste tu contraseña?",
+    "no_account": "¿No tenés cuenta?",
+    "has_account": "¿Ya tenés cuenta?"
+  },
+  "orders": {
+    "title": "Mis Pedidos",
+    "scheduled": "Programado",
+    "pending": "Pendiente",
+    "confirmed": "Confirmado",
+    "preparing": "Preparando",
+    "ready": "Listo",
+    "on_route": "En camino",
+    "delivered": "Entregado",
+    "cancelled": "Cancelado",
+    "order_number": "Pedido #{{number}}",
+    "scheduled_for": "Programado para {{time}}",
+    "total": "Total",
+    "status": "Estado"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "schedule_label": "¿Cuándo querés recibirlo?",
+    "schedule_now": "Lo antes posible",
+    "schedule_clear": "Entregar ahora",
+    "subtotal": "Subtotal",
+    "delivery_fee": "Envío",
+    "tax": "IVA",
+    "discount": "Descuento",
+    "total": "Total",
+    "place_order": "Confirmar Pedido",
+    "coupon_label": "¿Tenés un cupón?",
+    "coupon_placeholder": "Ingresá tu código",
+    "coupon_apply": "Aplicar",
+    "coupon_invalid": "Cupón inválido",
+    "coupon_applied": "Cupón aplicado: {{code}}"
+  },
+  "profile": {
+    "title": "Mi Perfil",
+    "name": "Nombre",
+    "phone": "Teléfono",
+    "address": "Dirección",
+    "language": "Idioma",
+    "notifications": "Notificaciones",
+    "kyc_status": "Estado KYC"
+  },
+  "delivery": {
+    "available": "Disponible",
+    "busy": "Ocupado",
+    "offline": "Desconectado",
+    "earnings": "Ganancias",
+    "orders": "Pedidos",
+    "kyc_pending": "Verificación pendiente"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "revenue": "Ingresos",
+    "orders": "Pedidos",
+    "vendors": "Comercios",
+    "delivery": "Repartidores",
+    "drivers": "Conductores",
+    "commission": "Comisiones",
+    "top_vendors": "Top Comercios",
+    "daily_stats": "Últimos 7 días",
+    "platform_totals": "Totales de Plataforma"
+  }
+}

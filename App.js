@@ -7,6 +7,7 @@ import { Platform, StyleSheet } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 
 // Contexts
+import { LanguageProvider } from './src/context/LanguageContext';
 import { AuthProvider } from './src/context/AuthContext';
 import { NotificationProvider } from './src/context/NotificationContext';
 
@@ -21,14 +22,16 @@ if (Platform.OS === 'android') {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <NotificationProvider>
-          <NavigationContainer>
-            <StatusBar style="dark" backgroundColor="#FFFFFF" translucent={false} />
-            <AppNavigator />
-          </NavigationContainer>
-        </NotificationProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <NavigationContainer>
+              <StatusBar style="dark" backgroundColor="#FFFFFF" translucent={false} />
+              <AppNavigator />
+            </NavigationContainer>
+          </NotificationProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </SafeAreaProvider>
   );
 }

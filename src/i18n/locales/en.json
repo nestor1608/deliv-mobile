@@ -1,0 +1,92 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "search": "Search",
+    "no_results": "No results",
+    "retry": "Retry",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register"
+  },
+  "auth": {
+    "welcome": "Welcome",
+    "email": "Email",
+    "password": "Password",
+    "username": "Username",
+    "login_title": "Sign In",
+    "register_title": "Create Account",
+    "forgot_password": "Forgot your password?",
+    "no_account": "Don't have an account?",
+    "has_account": "Already have an account?"
+  },
+  "orders": {
+    "title": "My Orders",
+    "scheduled": "Scheduled",
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "preparing": "Preparing",
+    "ready": "Ready",
+    "on_route": "On Route",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled",
+    "order_number": "Order #{{number}}",
+    "scheduled_for": "Scheduled for {{time}}",
+    "total": "Total",
+    "status": "Status"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "schedule_label": "When do you want it?",
+    "schedule_now": "As soon as possible",
+    "schedule_clear": "Deliver now",
+    "subtotal": "Subtotal",
+    "delivery_fee": "Delivery",
+    "tax": "Tax",
+    "discount": "Discount",
+    "total": "Total",
+    "place_order": "Place Order",
+    "coupon_label": "Have a coupon?",
+    "coupon_placeholder": "Enter your code",
+    "coupon_apply": "Apply",
+    "coupon_invalid": "Invalid coupon",
+    "coupon_applied": "Coupon applied: {{code}}"
+  },
+  "profile": {
+    "title": "My Profile",
+    "name": "Name",
+    "phone": "Phone",
+    "address": "Address",
+    "language": "Language",
+    "notifications": "Notifications",
+    "kyc_status": "KYC Status"
+  },
+  "delivery": {
+    "available": "Available",
+    "busy": "Busy",
+    "offline": "Offline",
+    "earnings": "Earnings",
+    "orders": "Orders",
+    "kyc_pending": "Verification pending"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "revenue": "Revenue",
+    "orders": "Orders",
+    "vendors": "Vendors",
+    "delivery": "Delivery",
+    "drivers": "Drivers",
+    "commission": "Commission",
+    "top_vendors": "Top Vendors",
+    "daily_stats": "Last 7 days",
+    "platform_totals": "Platform Totals"
+  }
+}

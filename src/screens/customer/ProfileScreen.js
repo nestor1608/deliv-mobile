@@ -18,6 +18,9 @@ import {
 } from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
 import { NotificationContext } from '../../context/NotificationContext';
+import { LanguageContext } from '../../context/LanguageContext';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -27,8 +30,11 @@ const ProfileScreen = ({ navigation }) => {
     const insets = useSafeAreaInsets();
     const { userData, logout, updateProfile } = useContext(AuthContext);
     const { unreadCount } = useContext(NotificationContext);
+    const { switchLanguage } = useContext(LanguageContext);
+    const { t } = useTranslation();
     
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showLanguagePicker, setShowLanguagePicker] = useState(false);
     const [loading, setLoading] = useState(false);
     const [settings, setSettings] = useState({
         notifications: true,
@@ -367,9 +373,31 @@ const ProfileScreen = ({ navigation }) => {
                     {menuItems.map(renderMenuItem)}
                 </View>
 
+                {/* Language */}
+                <View style={styles.settingsSection}>
+                    <Text style={styles.sectionTitle}>{t('profile.language')}</Text>
+                    <TouchableOpacity style={styles.settingItem} onPress={() => setShowLanguagePicker(!showLanguagePicker)}>
+                        <View style={styles.settingLeft}>
+                            <Icon name="language" size={24} color="#666" />
+                            <Text style={styles.settingText}>{t('profile.language')}</Text>
+                        </View>
+                        <Text style={styles.settingValue}>{i18n.language === 'es' ? 'Español' : 'English'}</Text>
+                    </TouchableOpacity>
+                    {showLanguagePicker && (
+                        <View>
+                            <TouchableOpacity style={styles.languageOption} onPress={() => { switchLanguage('es'); setShowLanguagePicker(false); }}>
+                                <Text style={[styles.languageText, i18n.language === 'es' && styles.languageActive]}>Español</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.languageOption} onPress={() => { switchLanguage('en'); setShowLanguagePicker(false); }}>
+                                <Text style={[styles.languageText, i18n.language === 'en' && styles.languageActive]}>English</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
+
                 {/* Settings */}
                 <View style={styles.settingsSection}>
-                    <Text style={styles.sectionTitle}>Configuración</Text>
+                    <Text style={styles.sectionTitle}>{t('profile.notifications')}</Text>
                     
                     <View style={styles.settingItem}>
                         <View style={styles.settingLeft}>
@@ -614,6 +642,23 @@ const styles = StyleSheet.create({
         color: '#FF6B6B',
         marginLeft: 12,
         fontWeight: '600',
+    },
+    languageOption: {
+        padding: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    languageText: {
+        fontSize: 16,
+        color: '#333',
+    },
+    languageActive: {
+        color: '#2196F3',
+        fontWeight: 'bold',
+    },
+    settingValue: {
+        fontSize: 16,
+        color: '#666',
     },
     // Modal Styles
     modalContainer: {
