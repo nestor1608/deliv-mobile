@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
     View,
     Text,
@@ -12,15 +12,18 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import wsService from '../../services/ws';
+import { AuthContext } from '../../context/AuthContext';
 
 const OrderTrackingScreen = ({ navigation, route }) => {
     const insets = useSafeAreaInsets();
     const { orderId } = route.params || {};
-    
+    const { userToken, API_BASE_URL } = useContext(AuthContext);
+    const wsConnectedRef = useRef(false);
+
     const [orderStatus, setOrderStatus] = useState('confirmed');
     const [estimatedTime, setEstimatedTime] = useState(30);
     
-    // Simular estados del pedido
     const orderStates = [
         { id: 'confirmed', label: 'Pedido confirmado', icon: 'check-circle', completed: true },
         { id: 'preparing', label: 'Preparando pedido', icon: 'restaurant', completed: orderStatus !== 'confirmed' },
@@ -30,24 +33,57 @@ const OrderTrackingScreen = ({ navigation, route }) => {
     ];
 
     useEffect(() => {
-        // Simular progreso del pedido
-        const progressTimer = setTimeout(() => {
-            if (orderStatus === 'confirmed') {
-                setOrderStatus('preparing');
-                setEstimatedTime(25);
-            } else if (orderStatus === 'preparing') {
-                setOrderStatus('ready');
-                setEstimatedTime(15);
-            } else if (orderStatus === 'ready') {
-                setOrderStatus('delivering');
-                setEstimatedTime(10);
-            } else if (orderStatus === 'delivering') {
-                setOrderStatus('delivered');
-                setEstimatedTime(0);
+        if (!orderId) return;
+
+        const baseUrl = API_BASE_URL.replace('/api', '');
+        const wsUrl = `ws://${baseUrl.replace('https://', '').replace('http://', '')}/ws/orders/${orderId}/`;
+
+        wsService.setCallbacks({
+            onMessage: (data) => {
+                try {
+                    const msg = JSON.parse(data);
+                    if (msg.type === 'status_update') {
+                        setOrderStatus(msg.status);
+                        if (msg.message) {
+                            const parsed = parseInt(msg.message, 10);
+                            if (!isNaN(parsed)) setEstimatedTime(parsed);
+                        }
+                    }
+                } catch (e) {
+                    console.error('WS message error:', e);
+                }
+            },
+            onOpen: () => { wsConnectedRef.current = true; },
+            onError: (err) => console.error('WS error:', err),
+        });
+
+        wsService.connect(wsUrl, userToken);
+
+        return () => { wsService.disconnect(); };
+    }, [orderId]);
+
+    useEffect(() => {
+        if (wsConnectedRef.current) return;
+
+        const fallbackTimer = setTimeout(() => {
+            if (!wsConnectedRef.current) {
+                if (orderStatus === 'confirmed') {
+                    setOrderStatus('preparing');
+                    setEstimatedTime(25);
+                } else if (orderStatus === 'preparing') {
+                    setOrderStatus('ready');
+                    setEstimatedTime(15);
+                } else if (orderStatus === 'ready') {
+                    setOrderStatus('delivering');
+                    setEstimatedTime(10);
+                } else if (orderStatus === 'delivering') {
+                    setOrderStatus('delivered');
+                    setEstimatedTime(0);
+                }
             }
         }, 5000);
 
-        return () => clearTimeout(progressTimer);
+        return () => clearTimeout(fallbackTimer);
     }, [orderStatus]);
 
     const handleCallStore = () => {

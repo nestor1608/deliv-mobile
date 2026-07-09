@@ -4,6 +4,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import { AuthContext } from './AuthContext';
 
 // Configurar el comportamiento de las notificaciones
@@ -51,9 +52,8 @@ export const NotificationProvider = ({ children }) => {
 
             // Obtener token de push
             if (Device.isDevice) {
-                const token = await Notifications.getExpoPushTokenAsync({
-                    projectId: 'your-expo-project-id', // Reemplazar con tu project ID
-                });
+                const projectId = Constants.expoConfig?.extra?.eas?.projectId || 'e6568834-4db0-4483-9d6b-37d1279ef112';
+                const token = await Notifications.getExpoPushTokenAsync({ projectId });
                 setPushToken(token.data);
                 
                 // Enviar token al backend

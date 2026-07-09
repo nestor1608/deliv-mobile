@@ -10,7 +10,9 @@
     "extra": {
       "eas": {
         "projectId": "e6568834-4db0-4483-9d6b-37d1279ef112"
-      }
+      },
+      "devApiUrl": "http://localhost:8000/api",
+      "prodApiUrl": "https://api.deliv.com/api"
     },
     "splash": {
       "image": "./assets/splash-icon.png",

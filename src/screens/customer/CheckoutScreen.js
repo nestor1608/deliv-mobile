@@ -10,8 +10,10 @@ import {
     StatusBar,
     TextInput,
     Modal,
-    ActivityIndicator
+    ActivityIndicator,
+    Platform
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { AuthContext } from '../../context/AuthContext';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,7 +28,8 @@ const CheckoutScreen = ({ navigation, route }) => {
     const [paymentMethod, setPaymentMethod] = useState('');
     const [deliveryNotes, setDeliveryNotes] = useState('');
     const [deliveryTime, setDeliveryTime] = useState('now');
-    const [scheduledTime, setScheduledTime] = useState('');
+    const [scheduledTime, setScheduledTime] = useState(null);
+    const [showDatePicker, setShowDatePicker] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showTimeModal, setShowTimeModal] = useState(false);
@@ -161,9 +164,10 @@ const CheckoutScreen = ({ navigation, route }) => {
                 discount: updatedOrderData.discount,
                 deliveryFee: updatedOrderData.deliveryFee,
                 total: updatedOrderData.total,
-                status: 'confirmed',
+                status: scheduledTime ? 'scheduled' : 'confirmed',
                 estimatedDelivery: finalEstimatedTime,
                 orderDate: new Date().toISOString(),
+                ...(scheduledTime ? { scheduled_time: scheduledTime.toISOString() } : {}),
             };
 
             Alert.alert(
@@ -392,6 +396,38 @@ const CheckoutScreen = ({ navigation, route }) => {
                         numberOfLines={3}
                     />
                 </View>
+
+                {/* Programar pedido */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>¿Cuándo querés recibirlo?</Text>
+                    <TouchableOpacity
+                        style={styles.scheduleButton}
+                        onPress={() => setShowDatePicker(true)}
+                    >
+                        <Text style={styles.scheduleButtonText}>
+                            {scheduledTime
+                                ? scheduledTime.toLocaleString('es-AR')
+                                : 'Lo antes posible'}
+                        </Text>
+                    </TouchableOpacity>
+                    {scheduledTime && (
+                        <TouchableOpacity onPress={() => setScheduledTime(null)}>
+                            <Text style={styles.clearScheduleText}>Entregar ahora</Text>
+                        </TouchableOpacity>
+                    )}
+                    {showDatePicker && (
+                        <DateTimePicker
+                            value={scheduledTime || new Date()}
+                            mode="datetime"
+                            minimumDate={new Date()}
+                            maximumDate={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)}
+                            onChange={(event, date) => {
+                                setShowDatePicker(Platform.OS === 'ios');
+                                if (date) setScheduledTime(date);
+                            }}
+                        />
+                    )}
+                </View>
             </ScrollView>
 
             {/* Botón de confirmar pedido */}
@@ -569,6 +605,23 @@ const styles = StyleSheet.create({
         padding: 12,
         minHeight: 100,
         textAlignVertical: 'top',
+    },
+    scheduleButton: {
+        backgroundColor: '#F0F0F0',
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    scheduleButtonText: {
+        fontSize: 16,
+        color: '#333',
+    },
+    clearScheduleText: {
+        fontSize: 14,
+        color: '#2196F3',
+        textAlign: 'center',
+        marginTop: 8,
     },
     checkoutContainer: {
         backgroundColor: '#FFF',

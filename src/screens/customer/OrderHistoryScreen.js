@@ -111,6 +111,7 @@ const OrderHistoryScreen = ({ navigation }) => {
             case 'delivered': return '#4CAF50';
             case 'cancelled': return '#F44336';
             case 'in_progress': return '#FF9800';
+            case 'scheduled': return '#9C27B0';
             default: return '#666';
         }
     };
@@ -121,6 +122,7 @@ const OrderHistoryScreen = ({ navigation }) => {
             case 'cancelled': return 'Cancelado';
             case 'in_progress': return 'En progreso';
             case 'preparing': return 'Preparando';
+            case 'scheduled': return 'Programado';
             default: return 'Desconocido';
         }
     };
@@ -195,6 +197,13 @@ const OrderHistoryScreen = ({ navigation }) => {
                     ]}>
                         <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
                     </View>
+                    {item.status === 'scheduled' && item.scheduled_time && (
+                        <View style={styles.scheduledBadge}>
+                            <Text style={styles.scheduledBadgeText}>
+                                {new Date(item.scheduled_time).toLocaleString('es-AR')}
+                            </Text>
+                        </View>
+                    )}
                 </View>
             </View>
 
@@ -437,6 +446,18 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#FFF',
         fontWeight: 'bold',
+    },
+    scheduledBadge: {
+        backgroundColor: '#F3E5F5',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        marginTop: 4,
+    },
+    scheduledBadgeText: {
+        fontSize: 11,
+        color: '#9C27B0',
+        fontWeight: '500',
     },
     orderDetails: {
         marginBottom: 12,

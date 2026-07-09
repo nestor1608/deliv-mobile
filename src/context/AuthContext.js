@@ -3,7 +3,7 @@ import React, { createContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Alert } from 'react-native';
-import Constants from 'expo-constants';
+import { getApiBaseUrl } from '../utils/config';
 
 export const AuthContext = createContext();
 
@@ -14,10 +14,8 @@ export const AuthProvider = ({ children }) => {
     const [refreshToken, setRefreshToken] = useState(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    // Configuración segura de API
-    const API_BASE_URL = __DEV__ 
-        ? Constants.expoConfig?.extra?.devApiUrl || 'https://9b1d-181-91-166-174.ngrok-free.app/api'
-        : Constants.expoConfig?.extra?.prodApiUrl || 'https://9b1d-181-91-166-174.ngrok-free.app/api';
+    // Configuración segura de API desde config centralizado
+    const API_BASE_URL = getApiBaseUrl();
 
     // Timeout para requests
     const REQUEST_TIMEOUT = 15000;

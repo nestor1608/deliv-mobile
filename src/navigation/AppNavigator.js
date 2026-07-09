@@ -8,8 +8,18 @@ import MainStack from './MainStack';
 import StoreStack from './StoreStack';
 import DeliveryNavigator from './DeliveryNavigator';
 import MobilityNavigator from './MobilityNavigator';
+import AdminDashboardScreen from '../screens/admin/DashboardScreen';
 
 const Stack = createStackNavigator();
+
+const AdminStack = createStackNavigator();
+function AdminNavigator() {
+  return (
+    <AdminStack.Navigator screenOptions={{ headerShown: false }}>
+      <AdminStack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
+    </AdminStack.Navigator>
+  );
+}
 
 export default function AppNavigator() {
     const { isLoading, userToken, userData } = useContext(AuthContext);
@@ -36,6 +46,8 @@ export default function AppNavigator() {
                     <Stack.Screen name="Delivery" component={DeliveryNavigator} />
                 ) : userData?.role === 'driver' ? (
                     <Stack.Screen name="Mobility" component={MobilityNavigator} />
+                ) : userData?.role === 'admin' ? (
+                    <Stack.Screen name="Admin" component={AdminNavigator} />
                 ) : (
                     // Rol desconocido - volver a auth
                     <Stack.Screen name="Auth" component={AuthStack} />

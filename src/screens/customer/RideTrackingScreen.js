@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { AuthContext } from '../../context/AuthContext';
+import wsService from '../../services/ws';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -24,8 +25,9 @@ const { width, height } = Dimensions.get('window');
 const RideTrackingScreen = ({ route, navigation }) => {
     const insets = useSafeAreaInsets();
     const { rideId, rideData } = route.params;
-    const { authenticatedFetch, API_BASE_URL } = useContext(AuthContext);
+    const { authenticatedFetch, API_BASE_URL, userToken } = useContext(AuthContext);
     const mapRef = useRef(null);
+    const wsConnectedRef = useRef(false);
     
     const [ride, setRide] = useState(rideData || null);
     const [driver, setDriver] = useState(null);
@@ -76,20 +78,53 @@ const RideTrackingScreen = ({ route, navigation }) => {
     };
 
     useEffect(() => {
-        if (!rideData?.id && !rideId) {
-            // Wait
-        } else if (!rideData) {
-            loadRideDetails();
-        }
-        startLocationTracking();
-        
-        // Simular actualizaciones del estado del viaje
-        const interval = setInterval(() => {
-            if (rideId || rideData?.id) updateRideStatus();
-            updateDriverLocation();
-        }, 10000); // Actualizar cada 10 segundos
+        const idToLoad = rideId || rideData?.id;
+        if (!idToLoad) return;
 
-        return () => clearInterval(interval);
+        if (!rideData) loadRideDetails();
+        startLocationTracking();
+
+        const baseUrl = API_BASE_URL.replace('/api', '');
+        const wsUrl = `ws://${baseUrl.replace('https://', '').replace('http://', '')}/ws/trips/${idToLoad}/`;
+
+        wsService.setCallbacks({
+            onMessage: (data) => {
+                try {
+                    const msg = JSON.parse(data);
+                    if (msg.type === 'driver_location') {
+                        setDriverLocation({
+                            latitude: parseFloat(msg.latitude),
+                            longitude: parseFloat(msg.longitude),
+                        });
+                    } else if (msg.type === 'status_update') {
+                        setRide(prev => ({ ...prev, status: msg.status }));
+                        if (msg.status === 'completed') {
+                            setTimeout(() => {
+                                navigation.replace('RideRating', { rideId: idToLoad, rideData: ride });
+                            }, 2000);
+                        }
+                    }
+                } catch (e) {
+                    console.error('WS message error:', e);
+                }
+            },
+            onOpen: () => { wsConnectedRef.current = true; },
+            onError: (err) => console.error('WS error:', err),
+        });
+
+        wsService.connect(wsUrl, userToken);
+
+        const interval = setInterval(() => {
+            if (!wsConnectedRef.current) {
+                if (rideId || rideData?.id) updateRideStatus();
+                updateDriverLocation();
+            }
+        }, 10000);
+
+        return () => {
+            clearInterval(interval);
+            wsService.disconnect();
+        };
     }, [rideId, rideData]);
 
     useEffect(() => {

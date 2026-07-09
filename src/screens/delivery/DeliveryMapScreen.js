@@ -15,6 +15,7 @@ import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { AuthContext } from '../../context/AuthContext';
+import wsService from '../../services/ws';
 import * as Location from 'expo-location';
 
 const { width, height } = Dimensions.get('window');
@@ -22,8 +23,9 @@ const { width, height } = Dimensions.get('window');
 export default function DeliveryMapScreen() {
   const route = useRoute();
   const navigation = useNavigation();
-  const { authenticatedFetch } = useContext(AuthContext);
+  const { authenticatedFetch, userToken, API_BASE_URL } = useContext(AuthContext);
   const mapRef = useRef(null);
+  const wsConnected = useRef(false);
   
   const { orderId } = route.params;
   
@@ -37,8 +39,20 @@ export default function DeliveryMapScreen() {
   useEffect(() => {
     loadOrderDetails();
     startLocationTracking();
+
+    if (orderId) {
+      const baseUrl = API_BASE_URL.replace('/api', '');
+      const wsUrl = `ws://${baseUrl.replace('https://', '').replace('http://', '')}/ws/orders/${orderId}/`;
+      wsService.setCallbacks({
+        onOpen: () => { wsConnected.current = true; },
+        onError: (err) => console.error('WS error:', err),
+      });
+      wsService.connect(wsUrl, userToken);
+    }
+
     return () => {
       setTrackingEnabled(false);
+      wsService.disconnect();
     };
   }, []);
 
@@ -86,6 +100,12 @@ export default function DeliveryMapScreen() {
         (location) => {
           setCurrentLocation(location.coords);
           updateLocationOnServer(location.coords);
+          wsService.send({
+            type: 'location_update',
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            timestamp: location.timestamp,
+          });
         }
       );
 
