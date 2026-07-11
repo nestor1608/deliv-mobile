@@ -4,7 +4,7 @@ const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000/api';
 module.exports = {
   expo: {
     name: 'deliv_project',
-    slug: 'deliv_project',
+    slug: 'deliv',
     version: '1.0.0',
     orientation: 'portrait',
     icon: './assets/icon.png',
@@ -35,7 +35,18 @@ module.exports = {
     web: {
       favicon: './assets/favicon.png',
     },
+    owner: 'nestor_admin',
     plugins: [
+      [
+        'expo-dev-client',
+        {
+          launchMode: 'most-recent',
+          addGeneratedScheme: true,
+          android: {
+            defaultLaunchURL: 'http://localhost:8081',
+          },
+        },
+      ],
       [
         'expo-location',
         {
