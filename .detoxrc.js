@@ -1,5 +1,9 @@
 /** @type {Detox.DetoxConfig} */
 module.exports = {
+  session: {
+    autoStart: false,
+    server: 'ws://localhost:8099',
+  },
   testRunner: {
     args: {
       $0: 'jest',
@@ -12,12 +16,12 @@ module.exports = {
   apps: {
     'android.emu.debug': {
       type: 'android.apk',
-      build: 'cd android && ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug',
+      build: 'cd android && gradlew.bat assembleDebug assembleAndroidTest -DtestBuildType=debug',
       binaryPath: 'android/app/build/outputs/apk/debug/app-debug.apk',
     },
     'android.att.debug': {
       type: 'android.apk',
-      build: 'cd android && ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug',
+      build: 'cd android && gradlew.bat assembleDebug assembleAndroidTest -DtestBuildType=debug',
       binaryPath: 'android/app/build/outputs/apk/debug/app-debug.apk',
     },
   },
