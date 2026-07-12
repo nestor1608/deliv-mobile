@@ -1,15 +1,19 @@
 // app/(admin)/index.tsx
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, ScrollView, RefreshControl, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
 import apiClient from '../../src/services/apiClient';
 import { AdminDashboardResponse } from '../../src/types';
+import { AuthContext } from '../../src/context/AuthContext';
 
 const { width } = Dimensions.get('window');
 
 export default function AdminDashboardScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [days] = useState(30);
+    const { logout } = useContext(AuthContext);
+    const router = useRouter();
 
     const { data, refetch, isLoading, error } = useQuery<AdminDashboardResponse>({
         queryKey: ['admin', 'dashboard'],
@@ -35,6 +39,15 @@ export default function AdminDashboardScreen() {
                 </Text>
                 <TouchableOpacity onPress={() => refetch()} style={{ padding: 10, backgroundColor: '#2196F3', borderRadius: 8 }}>
                     <Text style={{ color: '#FFF' }}>Reintentar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={async () => {
+                        await logout();
+                        router.replace('/');
+                    }}
+                    style={{ padding: 12, backgroundColor: '#F44336', borderRadius: 8, marginTop: 10 }}
+                >
+                    <Text style={{ color: '#FFF', fontSize: 14 }}>Cerrar Sesión</Text>
                 </TouchableOpacity>
             </View>
         );
