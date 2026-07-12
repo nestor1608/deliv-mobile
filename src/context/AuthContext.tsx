@@ -21,7 +21,9 @@ export interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Module-level flag that survives component remounts
+// Key for persistent logged-out flag (survives JS reloads since deleteItemAsync is broken on Android 10)
+const LOGGED_OUT_KEY = '_loggedOut_v2';
+// Module-level flag that survives component remounts (but resets on JS reload)
 let _loggedOut = false;
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -42,11 +44,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
 
-      // Skip if user just logged out (survives component remounts)
+      // Check persistent logged-out flag (survives JS reloads because deleteItemAsync doesn't work on Android 10)
+      const storedLoggedOut = await SecureStore.getItemAsync(LOGGED_OUT_KEY);
+      if (storedLoggedOut === 'true') {
+        console.log('Stored logged-out flag found - skipping auth restore');
+        setIsLoading(false);
+        return;
+      }
+
+      // Module-level flag check (for same-session logouts)
       if (_loggedOut) {
         setIsLoading(false);
         return;
       }
+
       const token = await SecureStore.getItemAsync('userToken');
       const refresh = await SecureStore.getItemAsync('refreshToken');
 
@@ -78,7 +89,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const clearAuthState = async () => {
-    _loggedOut = true;  // Module-level flag, survives remounts
+    _loggedOut = true;
+    // Store flag in SecureStore (survives JS reloads because deleteItemAsync doesn't work on Android 10)
+    try {
+      await SecureStore.setItemAsync(LOGGED_OUT_KEY, 'true');
+    } catch (e) {
+      console.warn('Failed to store logout flag:', e);
+    }
     await SecureStore.deleteItemAsync('userToken');
     await SecureStore.deleteItemAsync('refreshToken');
     setUserToken(null);
@@ -90,7 +107,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     mutationFn: ({ username, password, userType }: LoginCredentials) =>
       authApi.login(username, password, userType),
     onSuccess: async (data) => {
-      _loggedOut = false;  // Reset so next auth check works
+      _loggedOut = false;
+      try { await SecureStore.setItemAsync(LOGGED_OUT_KEY, 'false'); } catch {}
       await SecureStore.setItemAsync('userToken', data.access);
       await SecureStore.setItemAsync('refreshToken', data.refresh);
       setUserToken(data.access);
@@ -110,8 +128,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const registerMutation = useMutation({
     mutationFn: (userData: RegisterData) => authApi.register(userData),
     onSuccess: async (data) => {
-      _loggedOut = false;  // Reset so next auth check works
+      _loggedOut = false;
       if (data.access && data.refresh) {
+        try { await SecureStore.setItemAsync(LOGGED_OUT_KEY, 'false'); } catch {}
         await SecureStore.setItemAsync('userToken', data.access);
         await SecureStore.setItemAsync('refreshToken', data.refresh);
         setUserToken(data.access);
