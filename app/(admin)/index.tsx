@@ -26,7 +26,10 @@ export default function AdminDashboardScreen() {
     if (error) {
         return (
             <View style={styles.loading}>
-                <Text style={{ color: 'red', marginBottom: 10 }}>Error al cargar dashboard</Text>
+                <Text style={{ color: 'red', marginBottom: 10 }}>Error: {error?.message || 'Error desconocido'}</Text>
+                <Text style={{ color: '#999', marginBottom: 10, fontSize: 12 }}>
+                    Status: {(error as any)?.status || 'N/A'}
+                </Text>
                 <Text style={{ color: '#666', marginBottom: 20, textAlign: 'center', paddingHorizontal: 20 }}>
                     Verifica que el backend esté corriendo y accesible desde el dispositivo.
                 </Text>
