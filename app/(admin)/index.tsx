@@ -19,6 +19,13 @@ export default function AdminDashboardScreen() {
         retry: 2,
     });
 
+    // Diagnostic: test without auth to check if endpoint is reachable
+    const testQuery = useQuery({
+        queryKey: ['admin', 'dashboard', 'test'],
+        queryFn: () => apiClient.get(`admin/dashboard/?days=${days}`, { skipAuth: true }),
+        retry: 1,
+    });
+
     const onRefresh = async () => { setRefreshing(true); await refetch(); setRefreshing(false); };
 
     if (isLoading) {
@@ -31,6 +38,9 @@ export default function AdminDashboardScreen() {
                 <Text style={{ color: 'red', marginBottom: 10 }}>Error: {error?.message || 'Error desconocido'}</Text>
                 <Text style={{ color: '#999', marginBottom: 10, fontSize: 12 }}>
                     Status: {(error as any)?.status || 'N/A'}
+                </Text>
+                <Text style={{ color: '#999', fontSize: 11, marginTop: 5 }}>
+                    Test sin auth: {testQuery.isSuccess ? 'OK' : testQuery.error ? (testQuery.error as any)?.message || 'Error' : '...'}
                 </Text>
                 <Text style={{ color: '#666', marginBottom: 20, textAlign: 'center', paddingHorizontal: 20 }}>
                     Verifica que el backend esté corriendo y accesible desde el dispositivo.
