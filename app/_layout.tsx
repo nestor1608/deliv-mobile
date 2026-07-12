@@ -5,7 +5,7 @@ import { LanguageProvider } from '../src/context/LanguageContext';
 import { AuthProvider } from '../src/context/AuthContext';
 import { NotificationProvider } from '../src/context/NotificationContext';
 import { ActivityIndicator, View, Text } from 'react-native';
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../src/context/AuthContext';
 
 const queryClient = new QueryClient({
@@ -17,9 +17,11 @@ const queryClient = new QueryClient({
 function RootLayoutNav() {
   const { isLoading, userToken, userData } = useContext(AuthContext);
   const router = useRouter();
+  const [navigated, setNavigated] = useState(false);
 
   useEffect(() => {
     if (isLoading) return;
+    if (navigated) return;
 
     if (!userToken) {
       router.replace('/(auth)/welcome');
@@ -32,9 +34,10 @@ function RootLayoutNav() {
       else if (role === 'admin') router.replace('/(admin)');
       else router.replace('/(auth)/welcome');
     }
-  }, [isLoading, userToken, userData]);
+    setNavigated(true);
+  }, [isLoading, userToken, userData, navigated]);
 
-  if (isLoading) {
+  if (isLoading || !navigated) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF' }}>
         <ActivityIndicator size="large" color="#2196F3" />
@@ -43,7 +46,6 @@ function RootLayoutNav() {
     );
   }
 
-  // Render ALL screen groups always (no conditionals)
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(auth)" />
