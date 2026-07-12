@@ -16,8 +16,14 @@ module.exports = {
       devApiUrl: apiUrl,
       prodApiUrl: 'https://api.deliv.com/api',
     },
+    updates: {
+      url: 'https://u.expo.dev/e6568834-4db0-4483-9d6b-37d1279ef112',
+    },
     ios: {
       supportsTablet: true,
+      runtimeVersion: {
+        policy: 'appVersion',
+      },
     },
     android: {
       adaptiveIcon: {
@@ -30,6 +36,7 @@ module.exports = {
         'android.permission.ACCESS_BACKGROUND_LOCATION',
       ],
       package: 'com.nestor_admin.deliv_project',
+      runtimeVersion: '1.0.0',
     },
     scheme: 'deliv',
     web: {
