@@ -1,11 +1,11 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LanguageProvider } from '../src/context/LanguageContext';
 import { AuthProvider } from '../src/context/AuthContext';
 import { NotificationProvider } from '../src/context/NotificationContext';
 import { ActivityIndicator, View, Text } from 'react-native';
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { AuthContext } from '../src/context/AuthContext';
 
 const queryClient = new QueryClient({
@@ -16,6 +16,23 @@ const queryClient = new QueryClient({
 
 function RootLayoutNav() {
   const { isLoading, userToken, userData } = useContext(AuthContext);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!userToken) {
+      router.replace('/(auth)/welcome');
+    } else {
+      const role = userData?.role;
+      if (role === 'customer') router.replace('/(customer)');
+      else if (role === 'vendor') router.replace('/(vendor)');
+      else if (role === 'delivery') router.replace('/(delivery)');
+      else if (role === 'driver') router.replace('/(mobility)');
+      else if (role === 'admin') router.replace('/(admin)');
+      else router.replace('/(auth)/welcome');
+    }
+  }, [isLoading, userToken, userData]);
 
   if (isLoading) {
     return (
@@ -26,25 +43,15 @@ function RootLayoutNav() {
     );
   }
 
+  // Render ALL screen groups always (no conditionals)
   return (
-    <Stack key={userToken ? 'logged-in' : 'logged-out'} screenOptions={{ headerShown: false }}>
-      {userToken ? (
-        userData?.role === 'customer' ? (
-          <Stack.Screen name="(customer)" />
-        ) : userData?.role === 'vendor' ? (
-          <Stack.Screen name="(vendor)" />
-        ) : userData?.role === 'delivery' ? (
-          <Stack.Screen name="(delivery)" />
-        ) : userData?.role === 'driver' ? (
-          <Stack.Screen name="(mobility)" />
-        ) : userData?.role === 'admin' ? (
-          <Stack.Screen name="(admin)" />
-        ) : (
-          <Stack.Screen name="(auth)" />
-        )
-      ) : (
-        <Stack.Screen name="(auth)" />
-      )}
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(customer)" />
+      <Stack.Screen name="(vendor)" />
+      <Stack.Screen name="(delivery)" />
+      <Stack.Screen name="(mobility)" />
+      <Stack.Screen name="(admin)" />
     </Stack>
   );
 }
