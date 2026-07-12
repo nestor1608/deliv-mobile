@@ -27,7 +27,7 @@ function RootLayoutNav() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack key={userToken ? 'logged-in' : 'logged-out'} screenOptions={{ headerShown: false }}>
       {userToken ? (
         userData?.role === 'customer' ? (
           <Stack.Screen name="(customer)" />
