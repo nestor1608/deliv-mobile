@@ -27,6 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userToken, setUserToken] = useState<string | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [loggedOut, setLoggedOut] = useState(false);
 
   const API_BASE_URL = 'http://localhost:8000/api'; // kept for backward compatibility
 
@@ -38,6 +39,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const restoreAuthState = async () => {
     try {
       setIsLoading(true);
+      if (loggedOut) {
+        setIsLoading(false);
+        return;
+      }
       const token = await SecureStore.getItemAsync('userToken');
       const refresh = await SecureStore.getItemAsync('refreshToken');
 
@@ -69,6 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const clearAuthState = async () => {
+    setLoggedOut(true);
     await SecureStore.deleteItemAsync('userToken');
     await SecureStore.deleteItemAsync('refreshToken');
     setUserToken(null);
@@ -80,6 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     mutationFn: ({ username, password, userType }: LoginCredentials) =>
       authApi.login(username, password, userType),
     onSuccess: async (data) => {
+      setLoggedOut(false);
       await SecureStore.setItemAsync('userToken', data.access);
       await SecureStore.setItemAsync('refreshToken', data.refresh);
       setUserToken(data.access);
