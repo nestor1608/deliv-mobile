@@ -1,6 +1,6 @@
 // app/(admin)/index.tsx
 import React, { useState } from 'react';
-import { View, Text, ScrollView, RefreshControl, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../../src/services/apiClient';
 import { AdminDashboardResponse } from '../../src/types';
@@ -11,18 +11,37 @@ export default function AdminDashboardScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [days] = useState(30);
 
-    const { data, refetch } = useQuery<AdminDashboardResponse>({
+    const { data, refetch, isLoading, error } = useQuery<AdminDashboardResponse>({
         queryKey: ['admin', 'dashboard'],
         queryFn: () => apiClient.get<AdminDashboardResponse>(`admin/dashboard/?days=${days}`),
+        retry: 2,
     });
 
     const onRefresh = async () => { setRefreshing(true); await refetch(); setRefreshing(false); };
 
-    const dashboardData = data;
-
-    if (!dashboardData) {
+    if (isLoading) {
         return <View style={styles.loading}><Text>Cargando dashboard...</Text></View>;
     }
+
+    if (error) {
+        return (
+            <View style={styles.loading}>
+                <Text style={{ color: 'red', marginBottom: 10 }}>Error al cargar dashboard</Text>
+                <Text style={{ color: '#666', marginBottom: 20, textAlign: 'center', paddingHorizontal: 20 }}>
+                    Verifica que el backend esté corriendo y accesible desde el dispositivo.
+                </Text>
+                <TouchableOpacity onPress={() => refetch()} style={{ padding: 10, backgroundColor: '#2196F3', borderRadius: 8 }}>
+                    <Text style={{ color: '#FFF' }}>Reintentar</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
+
+    const dashboardData = data || {
+        total_revenue: 0, total_orders: 0, active_vendors: 0,
+        active_delivery: 0, active_drivers: 0, total_commission: 0,
+        daily_stats: [], total_platform_revenue: 0, total_platform_orders: 0,
+    };
 
     return (
         <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
