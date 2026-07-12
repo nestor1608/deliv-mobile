@@ -1,6 +1,7 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import * as SQLite from 'expo-sqlite';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as authApi from '../services/authApi';
 import type { UserData, LoginCredentials, RegisterData } from '../types';
@@ -21,6 +22,33 @@ export interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// SQLite helper — survives full JS reloads (writes to disk file)
+let _db: any = null;
+async function getDb() {
+  if (!_db) {
+    _db = await SQLite.openDatabaseAsync('auth.db');
+    await _db.execAsync('CREATE TABLE IF NOT EXISTS flags (key TEXT PRIMARY KEY, value TEXT)');
+  }
+  return _db;
+}
+
+async function getFlag(key: string): Promise<string | null> {
+  try {
+    const db = await getDb();
+    const row = await db.getFirstAsync('SELECT value FROM flags WHERE key = ?', key);
+    return row?.value ?? null;
+  } catch { return null; }
+}
+
+async function setFlag(key: string, value: string) {
+  try {
+    const db = await getDb();
+    await db.runAsync('INSERT OR REPLACE INTO flags (key, value) VALUES (?, ?)', key, value);
+  } catch (e) { console.warn('Failed to set flag:', e); }
+}
+
+const LOGGED_OUT_FLAG = 'loggedOut';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(true);
@@ -28,9 +56,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const API_BASE_URL = 'http://localhost:8000/api'; // kept for backward compatibility
+  const API_BASE_URL = 'http://localhost:8000/api';
 
-  // Restore auth state on mount
   useEffect(() => {
     restoreAuthState();
   }, []);
@@ -39,30 +66,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
 
-      const token = await SecureStore.getItemAsync('userToken');
-      const refresh = await SecureStore.getItemAsync('refreshToken');
-
-      // If token is empty, it means we logged out (overwritten with '')
-      if (!token || token === '') {
+      // Check SQLite flag FIRST — survives full JS reloads
+      const loggedOut = await getFlag(LOGGED_OUT_FLAG);
+      if (loggedOut === 'true') {
+        console.log('Logout flag found — skipping auto-login');
         setIsLoading(false);
         return;
       }
 
+      const token = await SecureStore.getItemAsync('userToken');
+      const refresh = await SecureStore.getItemAsync('refreshToken');
+
       if (token && refresh) {
         setUserToken(token);
-        // Verify token is valid
         try {
           const profile = await authApi.getProfile();
           setUserData(profile);
         } catch {
-          // Token invalid, try refresh
           try {
             const newToken = await authApi.refreshAccessToken();
-            setUserToken(newToken);
-            const profile = await authApi.getProfile();
-            setUserData(profile);
+            if (newToken) {
+              setUserToken(newToken);
+              const profile = await authApi.getProfile();
+              setUserData(profile);
+            }
           } catch {
-            // Everything failed, logout
             await clearAuthState();
           }
         }
@@ -76,14 +104,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const clearAuthState = async () => {
-    // Overwrite tokens with empty string instead of deleting
-    // (deleteItemAsync is broken on Android 10 Keystore)
-    try {
-      await SecureStore.setItemAsync('userToken', '');
-      await SecureStore.setItemAsync('refreshToken', '');
-    } catch (e) {
-      console.warn('Failed to clear tokens:', e);
-    }
+    // Store flag in SQLite — SURVIVES full JS reloads (unlike SecureStore on Android 10)
+    await setFlag(LOGGED_OUT_FLAG, 'true');
+    // Also try to clear SecureStore (best effort)
+    try { await SecureStore.deleteItemAsync('userToken'); } catch {}
+    try { await SecureStore.deleteItemAsync('refreshToken'); } catch {}
     setUserToken(null);
     setUserData(null);
     queryClient.clear();
@@ -93,11 +118,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     mutationFn: ({ username, password, userType }: LoginCredentials) =>
       authApi.login(username, password, userType),
     onSuccess: async (data) => {
+      await setFlag(LOGGED_OUT_FLAG, 'false');
       await SecureStore.setItemAsync('userToken', data.access);
       await SecureStore.setItemAsync('refreshToken', data.refresh);
       setUserToken(data.access);
       setUserData(data.user);
-      // Prefetch profile
       try {
         const profile = await authApi.getProfile();
         setUserData(profile);
@@ -113,6 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     mutationFn: (userData: RegisterData) => authApi.register(userData),
     onSuccess: async (data) => {
       if (data.access && data.refresh) {
+        await setFlag(LOGGED_OUT_FLAG, 'false');
         await SecureStore.setItemAsync('userToken', data.access);
         await SecureStore.setItemAsync('refreshToken', data.refresh);
         setUserToken(data.access);
@@ -147,7 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [isRefreshing]);
 
-  const contextValue = useMemo<AuthContextType>(() => ({
+  const contextValue = useMemo(() => ({
     isLoading,
     userToken,
     userData,
@@ -162,21 +188,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       queryClient.setQueryData(['auth', 'profile'], data);
       return { success: true, data };
     },
-    refreshAccessToken,
-    isAuthenticated: !!userToken,
     authenticatedFetch: async (url: string, options: RequestInit = {}) => {
-      const token = userToken || (await refreshAccessToken());
-      if (!token) throw new Error('Not authenticated');
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          ...options.headers,
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      let token = userToken || await SecureStore.getItemAsync('userToken');
+      if (!token) throw new Error('No authentication token available');
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        ...options.headers as Record<string, string>,
+      };
+      let response = await fetch(url, { ...options, headers });
+      if (response.status === 401 && !isRefreshing) {
+        try {
+          const newToken = await refreshAccessToken();
+          if (newToken) {
+            headers.Authorization = `Bearer ${newToken}`;
+            response = await fetch(url, { ...options, headers });
+          }
+        } catch {
+          await clearAuthState();
+          throw new Error('Authentication failed');
+        }
+      }
       return response;
     },
-  }), [isLoading, userToken, userData, API_BASE_URL, loginMutation, registerMutation, logoutMutation, refreshAccessToken]);
+    refreshAccessToken,
+    isAuthenticated: !!userToken,
+  }), [isLoading, userToken, userData, isRefreshing, loginMutation.mutateAsync, registerMutation.mutateAsync, logoutMutation.mutateAsync, queryClient, refreshAccessToken]);
 
   return (
     <AuthContext.Provider value={contextValue}>
