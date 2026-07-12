@@ -2,7 +2,6 @@
 import React, { useState, useContext } from 'react';
 import { View, Text, ScrollView, RefreshControl, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
 import apiClient from '../../src/services/apiClient';
 import { AdminDashboardResponse } from '../../src/types';
 import { AuthContext } from '../../src/context/AuthContext';
@@ -13,7 +12,6 @@ export default function AdminDashboardScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [days] = useState(30);
     const { logout } = useContext(AuthContext);
-    const router = useRouter();
 
     const { data, refetch, isLoading, error } = useQuery<AdminDashboardResponse>({
         queryKey: ['admin', 'dashboard'],
@@ -43,9 +41,6 @@ export default function AdminDashboardScreen() {
                 <TouchableOpacity
                     onPress={async () => {
                         await logout();
-                        // Small delay to ensure auth state propagates
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                        router.replace('/(auth)/login');
                     }}
                     style={{ padding: 12, backgroundColor: '#F44336', borderRadius: 8, marginTop: 10 }}
                 >
