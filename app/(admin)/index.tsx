@@ -43,7 +43,9 @@ export default function AdminDashboardScreen() {
                 <TouchableOpacity
                     onPress={async () => {
                         await logout();
-                        router.replace('/');
+                        // Small delay to ensure auth state propagates
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        router.replace('/(auth)/login');
                     }}
                     style={{ padding: 12, backgroundColor: '#F44336', borderRadius: 8, marginTop: 10 }}
                 >
