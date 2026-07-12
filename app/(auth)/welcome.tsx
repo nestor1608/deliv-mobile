@@ -48,7 +48,7 @@ export default function WelcomeScreen() {
             id: 'driver',
             title: 'Conductor',
             subtitle: 'Gana dinero llevando pasajeros',
-            icon: 'car',
+            icon: 'directions-car',
             color: '#9C27B0',
             available: true,
         },
