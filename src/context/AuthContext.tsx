@@ -21,13 +21,15 @@ export interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Module-level flag that survives component remounts
+let _loggedOut = false;
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(true);
   const [userToken, setUserToken] = useState<string | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [loggedOut, setLoggedOut] = useState(false);
 
   const API_BASE_URL = 'http://localhost:8000/api'; // kept for backward compatibility
 
@@ -39,7 +41,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const restoreAuthState = async () => {
     try {
       setIsLoading(true);
-      if (loggedOut) {
+
+      // Skip if user just logged out (survives component remounts)
+      if (_loggedOut) {
         setIsLoading(false);
         return;
       }
@@ -74,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const clearAuthState = async () => {
-    setLoggedOut(true);
+    _loggedOut = true;  // Module-level flag, survives remounts
     await SecureStore.deleteItemAsync('userToken');
     await SecureStore.deleteItemAsync('refreshToken');
     setUserToken(null);
@@ -86,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     mutationFn: ({ username, password, userType }: LoginCredentials) =>
       authApi.login(username, password, userType),
     onSuccess: async (data) => {
-      setLoggedOut(false);
+      _loggedOut = false;  // Reset so next auth check works
       await SecureStore.setItemAsync('userToken', data.access);
       await SecureStore.setItemAsync('refreshToken', data.refresh);
       setUserToken(data.access);
@@ -106,6 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const registerMutation = useMutation({
     mutationFn: (userData: RegisterData) => authApi.register(userData),
     onSuccess: async (data) => {
+      _loggedOut = false;  // Reset so next auth check works
       if (data.access && data.refresh) {
         await SecureStore.setItemAsync('userToken', data.access);
         await SecureStore.setItemAsync('refreshToken', data.refresh);
